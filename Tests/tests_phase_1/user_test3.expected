@@ -1,0 +1,21 @@
+UserClientMain
+Received 2 arguments
+arg[0] = localhost
+arg[1] = 2001
+> Account not empty
+> OK
+> OK
+> OK
+150
+> OK
+> Insufficient Balance
+> Account already exists
+> throw an error here (source and dest account are the same)
+> throw an error here (amount is negative)
+> throw an error here (amount is zero)
+> throw an error here (Destination account does not exist)
+> throw an error here (Source account does not exist)
+> OK
+150
+> OK
+0

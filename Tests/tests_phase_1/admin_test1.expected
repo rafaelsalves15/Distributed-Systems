@@ -1,0 +1,42 @@
+AdminClientMain
+Received 2 arguments
+arg[0] = localhost
+arg[1] = 2001
+> OK
+ledgerState {
+  ledger {
+    type: OP_CREATE_ACCOUNT
+    userId: "alice"
+  }
+  ledger {
+    type: OP_TRANSFER_TO
+    userId: "broker"
+    destUserId: "alice"
+    amount: 150
+  }
+  ledger {
+    type: OP_CREATE_ACCOUNT
+    userId: "bob"
+  }
+  ledger {
+    type: OP_TRANSFER_TO
+    userId: "alice"
+    destUserId: "bob"
+    amount: 100
+  }
+  ledger {
+    type: OP_TRANSFER_TO
+    userId: "alice"
+    destUserId: "bob"
+    amount: 50
+  }
+  ledger {
+    type: OP_DELETE_ACCOUNT
+    userId: "alice"
+  }
+  ledger {
+    type: OP_CREATE_ACCOUNT
+    userId: "alice"
+  }
+}
+

@@ -1,0 +1,5 @@
+balance A bob
+transferTo A bob alice 10
+createAccount A dave
+deleteAccount A alice
+exit

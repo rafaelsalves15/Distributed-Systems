@@ -1,0 +1,5 @@
+createAccount A bob
+transferTo A alice bob 100
+balance A alice
+balance A bob
+exit

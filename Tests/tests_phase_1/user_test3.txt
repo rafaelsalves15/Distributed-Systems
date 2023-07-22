@@ -1,0 +1,15 @@
+deleteAccount A alice
+transferTo A alice bob 50
+deleteAccount A alice
+balance A bob
+createAccount A alice
+transferTo A alice bob 100
+createAccount A alice
+transferTo A bob bob 100
+transferTo A bob alice -10
+transferTo A bob alice 0
+transferTo A bob charlie 10
+transferTo A charlie bob 10
+balance A bob
+balance A alice
+exit

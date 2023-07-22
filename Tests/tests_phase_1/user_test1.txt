@@ -1,0 +1,5 @@
+createAccount A alice
+balance A alice
+transferTo A broker alice 150
+balance A alice
+exit
