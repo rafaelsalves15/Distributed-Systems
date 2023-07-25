@@ -130,31 +130,19 @@ public class CommandParser {
 
 
     private void gossip(String line) {
-        System.out.println("GOSSIP ADMIN CP 1");
         String[] args = line.split(SPACE);
 
         // Obter server a partir dos argumentos
         String server = args[1];
 
-        // Construir Request -- Qualifier e o server para o qual vamos enviar (contrario ao qual o cliente invocou)
-        if(server.equals("A")){
-            System.out.println("GOSSIP ADMIN CP  -- 1if server == A ");
+        // Construir Request
+    
+        AdminDistLedger.GossipRequest.Builder builder = AdminDistLedger.GossipRequest.newBuilder();
+        builder.setQualifier(server);
+        AdminDistLedger.GossipRequest request = builder.build();
 
-            AdminDistLedger.GossipRequest.Builder builder = AdminDistLedger.GossipRequest.newBuilder();
-            builder.setQualifier("B");
-            AdminDistLedger.GossipRequest request = builder.build();
-            
-            AdminDistLedger.GossipResponse response = this.adminService.gossip(request, server);
-        }
-        else{
-            System.out.println("GOSSIP ADMIN CP  -- 2if server == B ");
-
-            AdminDistLedger.GossipRequest.Builder builder = AdminDistLedger.GossipRequest.newBuilder();
-            builder.setQualifier("A");
-            AdminDistLedger.GossipRequest request = builder.build();
-
-            AdminDistLedger.GossipResponse response = this.adminService.gossip(request, server);
-        }
+        /*AdminDistLedger.GossipResponse response = */ this.adminService.gossip(request, server);
+    
         System.out.println("GOSSIP ADMIN CP 2");
 
     

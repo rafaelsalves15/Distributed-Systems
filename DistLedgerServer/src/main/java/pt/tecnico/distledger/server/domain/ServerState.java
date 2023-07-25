@@ -9,14 +9,17 @@ import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.ShareWithOthersOP;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.contract.DistLedgerCommonDefinitions;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.InputStream;
 
-
-
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.crypto.spec.SecretKeySpec;
 
 public class ServerState {
     private final ArrayList<Operation> ledger;
@@ -74,12 +77,12 @@ public class ServerState {
 
     // Ver se frontend está a frente da replica 
     // Retorna 1 se estiver adiantado , 0 caso contrario 
-    public int checkIfAhead(List<Integer> prevTS){
+    public int checkIfAhead(List<Integer> prev){
         
         int valueTimeStamp = repTS.get(server);  // Server serve como indice (se server==0 - A  se server==1 - B) 
-        int prev = prevTS.get(server);
+        int prevValue = prev.get(server);
         
-        if( prev <= valueTimeStamp  ){// && prevTS.get(server ^ 1) <= repTS.get(server ^ 1)
+        if( prevValue <= valueTimeStamp && prev.get(server ^ 1) <= repTS.get(server ^ 1) ){
             return 1;
         }
         else{
@@ -87,19 +90,30 @@ public class ServerState {
         }
     }
 
-    public void createAccount(String userId  ) throws InactiveServerException, AccountAlreadyExistsException {
-        
+    public List<Integer> createAccount(String userId ,  List<Integer> prev  ) throws InactiveServerException, AccountAlreadyExistsException {
+        printTS(prev);
         
         isServerActive();
-        if (accountExists(userId)) {
-            throw new AccountAlreadyExistsException();
+
+        if(checkIfAhead( prev) == 1 ){
+            if (accountExists(userId)) {
+                throw new AccountAlreadyExistsException();
+            }
+            repTS.set(server, repTS.get(server) + 1);
+            valueTS.set(server, valueTS.get(server) + 1);
+            // Create operation
+            Operation createAccount = new CreateOp(userId,prev);
+            // Add to ledger
+            this.ledger.add(createAccount);
+            // Create account
+            this.accounts.put(userId, 0);
+            return repTS; 
         }
-        // Create operation
-        Operation createAccount = new CreateOp(userId);
-        // Add to ledger
-        this.ledger.add(createAccount);
-        // Create account
-        this.accounts.put(userId, 0);
+        else {
+            // W A I T 
+            System.out.println("FE AHEAD OF REPLIACA");
+            return repTS;
+        }
     }
 
     private boolean accountExists(String userId) {
@@ -127,96 +141,136 @@ public class ServerState {
         this.accounts.remove(userId);
     }
 
-    public void transfer(String userId, String destUserId, int value) throws InactiveServerException,
+    public synchronized List<Integer> transfer(String userId, String destUserId, int value ,  List<Integer> prev) throws InactiveServerException,
             AccountDoesNotExistException, InsufficientBalanceException, DestAccountDoesNotExistException {
+        
+        printTS(prev);
         isServerActive();
-        if (!accountExists(userId)) {
-            throw new AccountDoesNotExistException();
-        }
 
-        if (!accountExists(destUserId)) {
-            throw new DestAccountDoesNotExistException();
-        }
-
-        // Get accounts balances
-        int srcBalance = this.accounts.get(userId);
-        int destBalance = this.accounts.get(destUserId);
-
-        if (value <= 0 || userId.equals(destUserId)) {
-            // just ignore
-            return;
-        }
-
-        // Check if account has enough funds
-        if (srcBalance < value) {
-            throw new InsufficientBalanceException();
-        }
-        // Create operation
-        Operation transfer = new TransferOp(userId, destUserId, value);
-        // Add to ledger
-        this.ledger.add(transfer);
-        // Update accounts
-        this.accounts.put(userId, srcBalance - value);
-        this.accounts.put(destUserId, destBalance + value);
-    }
-
-    public void shareWithOthersSvState(String name,  int value) throws AccountDoesNotExistException , ValueNotValidException {
-        //isServerActive();
-        
-        // Verificar se conta de user "name" existe --- se n existir -> Lançar excpetion AccountDoesNotExist
-        if (!accountExists(name)) {
-            throw new AccountDoesNotExistException();
-        }
-        // Verifiar se value é um inteiro entre 1 e 100 -- caso nao seja -> Lançar exception ValueNotValidException
-        if( value < 1  || value > 100  ) {
-            throw new ValueNotValidException();
-        }
-
-        //Obter saldo da conta "name"
-        int nameBalance = this.accounts.get(name);
-
-        // Criar Operacao 
-        Operation transferPercentage = new ShareWithOthersOP(name , value );
-
-        // Atualizar ledger da operacao 
-        this.ledger.add(transferPercentage);
-        
-        // Calcular valor a subtrair da conta name - value é uma PERCENTAGEM e nao o valor absoluto
-        double valuee = (double) value; 
-        double finalValue = nameBalance * ( 1 - (valuee / 100)); 
-        int finalValueI = (int) finalValue ; 
-
-        
-        // atualizar conta name - retirar lhe valor  
-        this.accounts.put(name, nameBalance - finalValueI);
-
-        // Adicionar valor equitativo as contas dos outros users 
-        int numAccounts = this.accounts.size();
-        double valueToAdd = finalValue / ( numAccounts - 2 )  ; // broker e conta a que subtraimos o valor nao contam pois nao vao receber o dinheiro
-        int valueToAddI = (int) valueToAdd ;
-        
-        // Percorrer o hashMap accounts -- vamos buscar o saldo de cada usuario e adicionar-lhe o valor devido
-        for (String nameAccount : this.accounts.keySet()) {
-            if (nameAccount.equals(name) || nameAccount.equals("broker")){
-                continue;                // Broker e Conta que partilha o dinheiro nao vao ter dinheiro adicionado na sua conta
+        if(checkIfAhead( prev) == 1 ){
+            
+            if (!accountExists(userId)) {
+                throw new AccountDoesNotExistException();
             }
-            int accountBalance = this.accounts.get(nameAccount);
-            this.accounts.put(nameAccount, accountBalance + valueToAddI);
-        }
+            if (!accountExists(destUserId)) {
+                throw new DestAccountDoesNotExistException();
+            }
 
+            // Get accounts balances
+            int srcBalance = this.accounts.get(userId);
+            int destBalance = this.accounts.get(destUserId);
+
+            if (value <= 0 || userId.equals(destUserId)) {
+                // just ignore
+                return repTS; // FIXME
+            }
+
+            // Check if account has enough funds
+            if (srcBalance < value) {
+                throw new InsufficientBalanceException();
+            }
+
+            repTS.set(server, repTS.get(server) + 1);
+            valueTS.set(server, valueTS.get(server) + 1);
+
+            // Create operation
+            Operation transfer = new TransferOp(userId, destUserId, value,prev);
+            // Add to ledger
+            this.ledger.add(transfer);
+            // Update accounts
+            this.accounts.put(userId, srcBalance - value);
+            this.accounts.put(destUserId, destBalance + value);
+            return repTS;
+        }
+        else {
+            // MISS
+            return repTS;
+        }
     }
-    public int getUserBalance(String userId) throws InactiveServerException, AccountDoesNotExistException {
+
+    public synchronized List<Integer> shareWithOthersSvState(String name,  int value , List<Integer> prev) throws AccountDoesNotExistException , ValueNotValidException {
+        //isServerActive();
+        printTS(prev);
+
+
+        if(checkIfAhead( prev ) == 1 ){
+            // Verificar se conta de user "name" existe --- se n existir -> Lançar excpetion AccountDoesNotExist
+            if (!accountExists(name)) {
+                throw new AccountDoesNotExistException();
+            }
+            // Verifiar se value é um inteiro entre 1 e 100 -- caso nao seja -> Lançar exception ValueNotValidException
+            if( value < 1  || value > 100  ) {
+                throw new ValueNotValidException();
+            }
+
+            //Obter saldo da conta "name"
+            int nameBalance = this.accounts.get(name);
+
+            repTS.set(server, repTS.get(server) + 1);
+            valueTS.set(server, valueTS.get(server) + 1);
+
+            // Criar Operacao 
+            Operation transferPercentage = new ShareWithOthersOP(name , value , prev);
+
+            // Atualizar ledger da operacao 
+            this.ledger.add(transferPercentage);
+            
+            // Calcular valor a subtrair da conta name - value é uma PERCENTAGEM e nao o valor absoluto
+            double valuee = (double) value; 
+            double finalValue =nameBalance * (valuee / 100); 
+            int finalValueI = (int) finalValue ; 
+
+            
+            // atualizar conta name - retirar lhe valor  
+            this.accounts.put(name, nameBalance - finalValueI);
+
+            // Adicionar valor equitativo as contas dos outros users 
+            int numAccounts = this.accounts.size();
+            double valueToAdd = finalValue / ( numAccounts - 2 )  ; // broker e conta a que subtraimos o valor nao contam pois nao vao receber o dinheiro
+            int valueToAddI = (int) valueToAdd ;
+            
+            // Percorrer o hashMap accounts -- vamos buscar o saldo de cada usuario e adicionar-lhe o valor devido
+            for (String nameAccount : this.accounts.keySet()) {
+                if (nameAccount.equals(name) || nameAccount.equals("broker")){
+                    continue;                // Broker e Conta que partilha o dinheiro nao vao ter dinheiro adicionado na sua conta
+                }
+                int accountBalance = this.accounts.get(nameAccount);
+                this.accounts.put(nameAccount, accountBalance + valueToAddI);
+            }
+
+            return repTS;
+        
+        }
+        else{
+            //MISS
+            return repTS;
+        }
+    }
+    
+    public synchronized List<Object> getUserBalance(String userId ,  List<Integer> prev ) throws InactiveServerException, AccountDoesNotExistException {
+        printTS(prev);
         isServerActive();
-        if (!accountExists(userId)) {
-            throw new AccountDoesNotExistException();
+
+        if (checkIfAhead(prev) == 1 ){
+            if (!accountExists(userId)) {
+                throw new AccountDoesNotExistException();
+            }
+            int val =  this.accounts.get(userId);
+            List<Object> result = new ArrayList<>();
+            result.add(val);
+            result.add(repTS);
+            return result;
         }
-        return this.accounts.get(userId);
+        else{
+            // MISS 
+            List<Object> result = new ArrayList<>(); return result;
+        }
     }
 
 
 
 
-    public synchronized void gossip(LedgerState state){
+    public synchronized void gossip(LedgerState state) throws InactiveServerException, AccountAlreadyExistsException, AccountDoesNotExistException, InsufficientBalanceException, DestAccountDoesNotExistException{
         //Servidor contrario 
         int otherServer = server ^ 1 ;// XOR: 0 passa a 1 ; 1 passa a 0 
         
@@ -226,15 +280,15 @@ public class ServerState {
         // for each Operation that is not in this replica
         while(  operationUpdate < numOperations ){
             //Obter operacao
-            pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.Operation operation = state.getLedger(operationUpdate);
+            DistLedgerCommonDefinitions.Operation operation = state.getLedger(operationUpdate);
 
             //Se Operacao for "createAccount" (operacao de escrita)
-            if(operation.getType().equals(pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.OperationType.OP_CREATE_ACCOUNT)){
+            if(operation.getType().equals(DistLedgerCommonDefinitions.OperationType.OP_CREATE_ACCOUNT)){
                 handleCreateAccontOperation(operation, otherServer);
             }
 
             //Se Operacao for "transferTo" (operacao de escrita)
-            else if(operation.getType().equals(pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.OperationType.OP_TRANSFER_TO)){
+            else if(operation.getType().equals(DistLedgerCommonDefinitions.OperationType.OP_TRANSFER_TO)){
                 handleTransferToOperation(operation, otherServer);
             }
 
@@ -242,10 +296,10 @@ public class ServerState {
         }
     }
 
-    public void handleCreateAccontOperation(pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.Operation operation , int otherServer){
+    public void handleCreateAccontOperation(DistLedgerCommonDefinitions.Operation operation , int otherServer) throws InactiveServerException, AccountAlreadyExistsException{
        
         String name = operation.getUserId();
-        createAccount(name, operation.getPrevTSList()); // TODO : PROTO 
+        createAccount(name, operation.getPrevTimeStampList()); 
         
         ledger.remove(ledger.size()-1); // TODO : check this
         
@@ -257,13 +311,13 @@ public class ServerState {
         
     }
 
-    public void handleTransferToOperation(pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.Operation operation,int otherServer){
+    public void handleTransferToOperation(DistLedgerCommonDefinitions.Operation operation,int otherServer) throws InactiveServerException, AccountDoesNotExistException, InsufficientBalanceException, DestAccountDoesNotExistException{
         
         String accFrom = operation.getUserId();
         String accDest = operation.getDestUserId();
         int amount = operation.getAmount();
 
-        transfer(accFrom, accDest, amount, operation.getPrevTSList());
+        transfer(accFrom, accDest, amount, operation.getPrevTimeStampList());
 
         ledger.remove(ledger.size()-1); //TODO:CHECK THIS
 
@@ -276,10 +330,8 @@ public class ServerState {
 
 
     
-    
-    
-    public void printTS(List<Integer> prevTS){
-        System.out.println("Prev: <" + prevTS.get(0) + "," + prevTS.get(1) +  ">");
+    public void printTS(List<Integer> prev){
+        System.out.println("Prev: <" + prev.get(0) + "," + prev.get(1) +  ">");
         System.out.println("valueTS: <" + valueTS.get(0) + "," + valueTS.get(1) + ">");
         System.out.println("replicaTS: <" + repTS.get(0) + "," + repTS.get(1) + ">");
     }

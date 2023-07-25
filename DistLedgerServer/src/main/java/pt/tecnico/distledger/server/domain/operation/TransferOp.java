@@ -1,15 +1,17 @@
 package pt.tecnico.distledger.server.domain.operation;
+import java.util.List;
 
 import pt.tecnico.distledger.contract.DistLedgerCommonDefinitions;
 
 public class TransferOp extends Operation {
     private String destAccount;
     private int amount;
-
-    public TransferOp(String fromAccount, String destAccount, int amount) {
+    private List<Integer> prev;
+    public TransferOp(String fromAccount, String destAccount, int amount , List<Integer> prev) {
         super(fromAccount);
         this.destAccount = destAccount;
-        this.amount = amount;
+        this.amount = amount; 
+        this.prev = prev; 
     }
 
     public String getDestAccount() {
@@ -27,6 +29,13 @@ public class TransferOp extends Operation {
     public void setAmount(int amount) {
         this.amount = amount;
     }
+    public List<Integer> getPrevTS(){
+        return prev;
+    }
+
+    public void setPrevTS(List<Integer> prevTS){
+        this.prev = prevTS;
+    }
 
     @Override
     public DistLedgerCommonDefinitions.Operation toGrpc() {
@@ -36,6 +45,8 @@ public class TransferOp extends Operation {
         grpcOperation.setUserId(getAccount());
         grpcOperation.setDestUserId(this.destAccount);
         grpcOperation.setAmount(this.amount);
+        grpcOperation.setPrevTimeStamp(0,this.getPrevTS().get(0));
+        grpcOperation.setPrevTimeStamp(1,this.getPrevTS().get(1));
         return grpcOperation.build();
     }
 }

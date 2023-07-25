@@ -1,15 +1,17 @@
 package pt.tecnico.distledger.server.domain.operation;
 
+import java.util.List;
+
 import pt.tecnico.distledger.contract.DistLedgerCommonDefinitions;
 
 
 public class ShareWithOthersOP extends Operation {
-    private String name;
     private int value;
-
-        public ShareWithOthersOP(String name, int value) {
+    private List<Integer> prev;
+        public ShareWithOthersOP(String name, int value , List<Integer> prev) {
             super(name);
             this.value = value;
+            this.prev = prev; 
         }
 
 
@@ -26,7 +28,13 @@ public class ShareWithOthersOP extends Operation {
             this.value = value;
         }
 
-
+        public List<Integer> getPrevTS(){
+            return prev;
+        }
+    
+        public void setPrevTS(List<Integer> prevTS){
+            this.prev = prevTS;
+        }
     @Override
     public DistLedgerCommonDefinitions.Operation toGrpc() { 
         // Builder
@@ -35,6 +43,8 @@ public class ShareWithOthersOP extends Operation {
         grpcOperation.setType(DistLedgerCommonDefinitions.OperationType.OP_SHARE_WITH_OTHERS);
         grpcOperation.setUserId(getAccount());
         grpcOperation.setTypeValue(this.value);
+        grpcOperation.setPrevTimeStamp(0,this.getPrevTS().get(0));
+        grpcOperation.setPrevTimeStamp(1,this.getPrevTS().get(1));
         return grpcOperation.build();
     }
    

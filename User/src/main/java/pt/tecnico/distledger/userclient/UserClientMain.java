@@ -23,7 +23,7 @@ public class UserClientMain {
         final String host = args[0];
         final int port = Integer.parseInt(args[1]);
         final String serverAddress = host + ":" + port;
-
+        
         UserService userService = new UserService(serverAddress);
         CommandParser parser = new CommandParser(userService);
         parser.parseInput();

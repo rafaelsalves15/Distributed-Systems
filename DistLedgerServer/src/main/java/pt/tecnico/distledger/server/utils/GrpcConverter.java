@@ -16,16 +16,15 @@ public class GrpcConverter {
 
     public static Operation grpcStateToDomain(DistLedgerCommonDefinitions.Operation operation) {
 
-        System.out.println("GRPC CONVERTER ");
 
         String username = operation.getUserId();
 
         if (operation.getType() == DistLedgerCommonDefinitions.OperationType.OP_TRANSFER_TO) {
-            return new TransferOp(username, operation.getDestUserId(), operation.getAmount());
+            return new TransferOp(username, operation.getDestUserId(), operation.getAmount() , operation.getPrevTimeStampList());
         } else if (operation.getType() == DistLedgerCommonDefinitions.OperationType.OP_CREATE_ACCOUNT) {
-            return new CreateOp(username);
-        } else if (operation.getType() == DistLedgerCommonDefinitions.OperationType.OP_SHARE_WITH_OTHERS){ // ADD Operation Type SHARE WITH OTHERS
-            return new ShareWithOthersOP(username, operation.getValue() );
+            return new CreateOp(username , operation.getPrevTimeStampList());
+        } else if (operation.getType() == DistLedgerCommonDefinitions.OperationType.OP_SHARE_WITH_OTHERS){ 
+            return new ShareWithOthersOP(username, operation.getValue() , operation.getPrevTimeStampList() );
         } else {
             return new DeleteOp(username);
         }

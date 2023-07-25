@@ -3,16 +3,23 @@ package pt.tecnico.distledger.server;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import pt.tecnico.distledger.contract.DistLedgerCommonDefinitions;
+import pt.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
+import pt.tecnico.distledger.contract.DistLedgerCommonDefinitions.OperationType;
 import pt.tecnico.distledger.contract.admin.AdminDistLedger.*;
 import pt.tecnico.distledger.contract.admin.AdminDistLedger;
 import pt.tecnico.distledger.contract.admin.AdminServiceGrpc;
+import pt.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.PropagateStateRequest;
+import pt.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.PropagateStateResponse;
 import pt.tecnico.distledger.contract.user.UserDistLedger;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.exceptions.ServerException;
+import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.server.utils.GrpcConverter;
 
 import java.util.List;
 import java.util.logging.Logger;
+
+import com.google.longrunning.Operation;
 
 public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase {
     private static final Logger LOGGER = Logger.getLogger(AdminServiceGrpc.class.getName());
@@ -88,7 +95,40 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase {
         }
     }
 
+  
+   
+    @Override
+     public void gossip(GossipRequest request, StreamObserver <GossipResponse> responseObserver){
+        try{
+        String qualifier = request.getQualifier();
+            
+        // Obter ledger list
+        List<pt.tecnico.distledger.server.domain.operation.Operation> listaLedger = this.serverState.getLedger();
 
+        //Construir ledger State
+        LedgerState.Builder ledgerStateBuilder = LedgerState.newBuilder();
+        for (pt.tecnico.distledger.server.domain.operation.Operation ledgerAdd : listaLedger) {
+            ledgerStateBuilder.addLedger(ledgerAdd.toGrpc());
+        }
+        
+        LedgerState ledger = ledgerStateBuilder.build();
+        
+        this.serverState.gossip(ledger);
+
+        GossipResponse res = GossipResponse.newBuilder().build();
+
+        responseObserver.onNext(res);
+        responseObserver.onCompleted();
+
+        }catch (ServerException e) {
+            responseObserver.onError(e.getStatus().asRuntimeException());
+        } catch (RuntimeException e) {
+            Status status = Status.UNAVAILABLE;
+            responseObserver.onError(status.asRuntimeException());
+        }
+    }
+
+     
 
     
 }

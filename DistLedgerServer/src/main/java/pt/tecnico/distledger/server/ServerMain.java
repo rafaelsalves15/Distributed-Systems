@@ -4,7 +4,7 @@ import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import pt.tecnico.distledger.server.domain.ServerState;
-
+import java.io.File;
 import java.io.IOException;
 
 public class ServerMain {
@@ -15,7 +15,7 @@ public class ServerMain {
         if (args.length > 0) {
             port = Integer.parseInt(args[0]);
         }
-
+            
         String qualifier = args[1];
 
         ServerState serverState = new ServerState(qualifier);
