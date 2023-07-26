@@ -94,19 +94,18 @@ public class CommandParser {
         String server = args[1];
 
         String userId = args[2];
-        UserDistLedger.CreateAccountRequest.Builder builder = UserDistLedger.CreateAccountRequest.newBuilder();
-        builder.setUserId(userId);
-        builder.addPrevTimestamp(prevTimeStamp.get(0));
-        builder.addPrevTimestamp(prevTimeStamp.get(1));
-        UserDistLedger.CreateAccountRequest request = builder.build();
-
-
-
         try {
+            UserDistLedger.CreateAccountRequest.Builder builder = UserDistLedger.CreateAccountRequest.newBuilder();
+            builder.setUserId(userId);
+            builder.addPrevTimestamp(prevTimeStamp.get(0));
+            builder.addPrevTimestamp(prevTimeStamp.get(1));
+            UserDistLedger.CreateAccountRequest request = builder.build();
+ 
             SignedCreateAccountResponse response = this.userService.createAccount(request, server);
 
             //SignedCreateAccountResponse formada por CreateAccountResponse (response) e signature
             // getResponse() pois newTimestamp e guardado em CreateAccountResponse 
+           
             prevTimeStamp.set(0, response.getResponse().getNewTimestamp(0));
             prevTimeStamp.set(1, response.getResponse().getNewTimestamp(1));
 
@@ -183,6 +182,7 @@ public class CommandParser {
 
         String server = args[1];
         String userId = args[2];
+
         UserDistLedger.BalanceRequest.Builder builder = UserDistLedger.BalanceRequest.newBuilder();
         builder.setUserId(userId);
         builder.addPrevTimestamp(prevTimeStamp.get(0));
@@ -192,7 +192,7 @@ public class CommandParser {
         try {
             UserDistLedger.SignedBalanceResponse response = this.userService.balance(request, server);
 
-            //SignedBalanceResponse formada porBalancetResponse (response) e signature
+            //SignedBalanceResponse formada porBalancetResponse (response) e signat ure
             // getResponse() pois newTimestamp e guardado em BalanceResponse 
             prevTimeStamp.set(0, response.getResponse().getNewTimestamp(0));
             prevTimeStamp.set(1, response.getResponse().getNewTimestamp(1)); //TODO: Check this --- leitura 
@@ -243,7 +243,7 @@ public class CommandParser {
                 "- deleteAccount <server> <username>\n" +
                 "- balance <server> <username>\n" +
                 "- transferTo <server> <username_from> <username_to> <amount>\n" +
-                "- shareWithOthers <server>\n" +
+                "- shareWithOthers <server> <username_from> <value>\n" +
                 "- exit\n");
     }
 }

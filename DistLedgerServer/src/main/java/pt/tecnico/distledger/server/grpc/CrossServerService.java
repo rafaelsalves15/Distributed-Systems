@@ -13,6 +13,7 @@ import pt.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServ
 
 
 
+
 import java.util.List;
 
 
@@ -23,27 +24,29 @@ public class CrossServerService {
     
 
     public CrossServerService(){
-        
     }
     
 
     public void propagateState(LedgerState ledger, String qualifier){
-
         if(qualifier.equals("A")){
+
             // Server to propagate -> B
             int port = 2002;                // port de servidor B 
             String host = "localhost" ;     //host de servidor B 
             
             String target = host + ":" + port;
+
             this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
             this.stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(channel); 
+
         }
-        else if(qualifier.equals("B")){
+        else{
             // Server to propagate -> A
             int port = 2001;                //port de servidor A
             String host = "localhost" ;     //host de servidor A
             
             String target = host + ":" + port;
+
             this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
             this.stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(channel); 
         }

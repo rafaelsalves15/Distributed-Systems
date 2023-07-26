@@ -9,7 +9,6 @@ import pt.tecnico.distledger.contract.admin.AdminDistLedger;
 import pt.tecnico.distledger.contract.admin.AdminServiceGrpc;
 import pt.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.PropagateStateRequest;
 import pt.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.PropagateStateResponse;
-import pt.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
 import pt.tecnico.distledger.contract.user.UserServiceGrpc;
 
 public class AdminService {
@@ -17,15 +16,16 @@ public class AdminService {
     private  ManagedChannel channel;
     private  AdminServiceGrpc.AdminServiceBlockingStub stub;
 
-    public AdminService(String target) {
-        this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-        this.stub = AdminServiceGrpc.newBlockingStub(channel);
+    public AdminService() {
+       // this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+       // this.stub = AdminServiceGrpc.newBlockingStub(channel);
     }
 
     // Operations supported are:
     // 1. Activate
     // 2. Deactivate
     // 3. Get Ledger State
+    // 4. Gossip
 
     public AdminDistLedger.ActivateResponse activate(AdminDistLedger.ActivateRequest request, String server) {
         // in the first phase we ignore the server because there is only one
@@ -54,23 +54,23 @@ public class AdminService {
     }
     
     public void connect(String server){
-         if(server.equals("A")){
-            int port = 2001;                // port de servidor A
-            String host = "localhost" ;     //host de servidor A 
-            String target = host + ":" + port;
-            shutdown();
-            this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-            this.stub = AdminServiceGrpc.newBlockingStub(channel);
+        if(server.equals("A")){
+           int port = 2001;                // port de servidor A
+           String host = "localhost" ;     //host de servidor A 
+           String target = host + ":" + port;
+          
+           this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+           this.stub = AdminServiceGrpc.newBlockingStub(channel);
         }
-        else{
-            int port = 2002;                // port de servidor B
-            String host = "localhost" ;     //host de servidor B 
-            String target = host + ":" + port;
-            shutdown();
-            this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-            this.stub = AdminServiceGrpc.newBlockingStub(channel);
-        }
-    }
+       else{
+           int port = 2002;                // port de servidor B
+           String host = "localhost" ;     //host de servidor B
+           String target = host + ":" + port;
+
+           this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+           this.stub = AdminServiceGrpc.newBlockingStub(channel);
+       }
+   }
 
     public void shutdown() {
         channel.shutdown();

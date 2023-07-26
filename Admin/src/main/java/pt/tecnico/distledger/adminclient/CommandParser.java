@@ -143,7 +143,6 @@ public class CommandParser {
 
         /*AdminDistLedger.GossipResponse response = */ this.adminService.gossip(request, server);
     
-        System.out.println("GOSSIP ADMIN CP 2");
 
     
     }

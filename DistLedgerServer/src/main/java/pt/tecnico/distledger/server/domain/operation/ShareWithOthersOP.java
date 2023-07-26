@@ -17,7 +17,9 @@ public class ShareWithOthersOP extends Operation {
 
         // Getters: 
 
-       
+        public List<Integer> getPrevTS(){
+            return prev;
+        }
         public int getValue(){
             return value;
         }
@@ -28,10 +30,6 @@ public class ShareWithOthersOP extends Operation {
             this.value = value;
         }
 
-        public List<Integer> getPrevTS(){
-            return prev;
-        }
-    
         public void setPrevTS(List<Integer> prevTS){
             this.prev = prevTS;
         }
@@ -43,8 +41,8 @@ public class ShareWithOthersOP extends Operation {
         grpcOperation.setType(DistLedgerCommonDefinitions.OperationType.OP_SHARE_WITH_OTHERS);
         grpcOperation.setUserId(getAccount());
         grpcOperation.setTypeValue(this.value);
-        grpcOperation.setPrevTimeStamp(0,this.getPrevTS().get(0));
-        grpcOperation.setPrevTimeStamp(1,this.getPrevTS().get(1));
+        grpcOperation.addPrevTimeStamp(this.getPrevTS().get(0));
+        grpcOperation.addPrevTimeStamp(this.getPrevTS().get(1));
         return grpcOperation.build();
     }
    

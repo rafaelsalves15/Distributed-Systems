@@ -39,14 +39,14 @@ public class TransferOp extends Operation {
 
     @Override
     public DistLedgerCommonDefinitions.Operation toGrpc() {
-
+        
         DistLedgerCommonDefinitions.Operation.Builder grpcOperation = DistLedgerCommonDefinitions.Operation.newBuilder();
         grpcOperation.setType(DistLedgerCommonDefinitions.OperationType.OP_TRANSFER_TO);
         grpcOperation.setUserId(getAccount());
         grpcOperation.setDestUserId(this.destAccount);
         grpcOperation.setAmount(this.amount);
-        grpcOperation.setPrevTimeStamp(0,this.getPrevTS().get(0));
-        grpcOperation.setPrevTimeStamp(1,this.getPrevTS().get(1));
+        grpcOperation.addPrevTimeStamp(this.getPrevTS().get(0));
+        grpcOperation.addPrevTimeStamp(this.getPrevTS().get(1));
         return grpcOperation.build();
     }
 }

@@ -25,10 +25,12 @@ public class ServerMain {
         // User implementation
         BindableService userService = new UserServiceImpl(serverState);
 
+         BindableService crossServerService = new CrossServerServiceImpl(serverState);
         // Create the server
         Server server = ServerBuilder.forPort(port)
                 .addService(adminService)
                 .addService(userService)
+                .addService(crossServerService)
                 .build();
 
         // Start the server

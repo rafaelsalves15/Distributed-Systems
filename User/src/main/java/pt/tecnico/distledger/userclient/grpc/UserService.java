@@ -13,6 +13,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Server;
 import pt.tecnico.distledger.contract.admin.AdminServiceGrpc;
 import pt.tecnico.distledger.contract.user.UserDistLedger;
 import pt.tecnico.distledger.contract.user.UserDistLedger.TransferToRequest;
@@ -24,6 +25,8 @@ import pt.tecnico.distledger.contract.user.UserDistLedger.SignedShareWithOthersR
 import pt.tecnico.distledger.contract.user.UserServiceGrpc;
 import javax.crypto.spec.SecretKeySpec;
 
+
+
 import java.io.InputStream;
 
 public class UserService {
@@ -31,9 +34,8 @@ public class UserService {
     private  UserServiceGrpc.UserServiceBlockingStub stub;
     private final static String SECRETKEYPATH = "/home/rafael/SDEE23/distledger-private-solution-phase-1-reference/User/src/main/resources/secret.key";
     
-    public UserService(String target) {
-        this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-        this.stub = UserServiceGrpc.newBlockingStub(channel);
+    public UserService() {
+        
     }
 
     // Operations supported are:
@@ -64,10 +66,11 @@ public class UserService {
         // in the first phase we ignore the server because there is only one
         connect(server);
 
-        UserDistLedger.SignedCreateAccountResponse signedResponse = this.stub.createAccount(request);
 
+        UserDistLedger.SignedCreateAccountResponse signedResponse = this.stub.createAccount(request);
+        
         if (signedResponse == null) {
-            System.out.println("Error . null ");
+            System.err.println("Error - signed response is null ");
             return null;
         }
 
@@ -79,6 +82,7 @@ public class UserService {
             return signedResponse;
         } else {
             // Assinatura e invalida 
+            System.err.println("Assinatura invalida");
             return null;
         }
     }
@@ -90,6 +94,7 @@ public class UserService {
     }
 
     public UserDistLedger.SignedBalanceResponse balance(UserDistLedger.BalanceRequest request, String server) throws Exception {
+
         // in the first phase we ignore the server because there is only one
         connect(server);
 
@@ -99,7 +104,6 @@ public class UserService {
             System.out.println("Error . null ");
             return null;
         }
-
         // Verificar a assinatura usando a chave secreta
         SecretKey secretKey = readKey(SECRETKEYPATH);
         
@@ -120,7 +124,7 @@ public class UserService {
         UserDistLedger.SignedTransferToResponse signedResponse = this.stub.transferTo(request);
         
         if (signedResponse == null) {
-            System.out.println("Error . null ");
+            System.err.println("Error - response is null ");
             return null;
         }
 
@@ -141,7 +145,7 @@ public class UserService {
         UserDistLedger.SignedShareWithOthersResponse signedResponse = this.stub.shareWithOthers(request);
         
         if (signedResponse == null) {
-            System.out.println("Error . null ");
+            System.err.println("Error - response is null ");
             return null;
         }
 
@@ -162,15 +166,16 @@ public class UserService {
             int port = 2001;                // port de servidor A
             String host = "localhost" ;     //host de servidor A 
             String target = host + ":" + port;
-            shutdown();
+           
             this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
             this.stub = UserServiceGrpc.newBlockingStub(channel);
         }
         else{
-            int port = 2002;                // port de servidor A
-            String host = "localhost" ;     //host de servidor A 
+            int port = 2002;                // port de servidor B
+            String host = "localhost" ;     //host de servidor B 
             String target = host + ":" + port;
-            shutdown();
+          
+            
             this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
             this.stub = UserServiceGrpc.newBlockingStub(channel);
         }

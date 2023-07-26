@@ -21,12 +21,13 @@ public class CreateOp extends Operation {
 
     @Override
     public DistLedgerCommonDefinitions.Operation toGrpc() {
-
         DistLedgerCommonDefinitions.Operation.Builder grpc_operation = DistLedgerCommonDefinitions.Operation.newBuilder();
         grpc_operation.setType(DistLedgerCommonDefinitions.OperationType.OP_CREATE_ACCOUNT);
         grpc_operation.setUserId(getAccount());
-        grpc_operation.setPrevTimeStamp(0,this.getPrevTS().get(0));
-        grpc_operation.setPrevTimeStamp(1,this.getPrevTS().get(1));
-        return grpc_operation.build();
+        grpc_operation.addPrevTimeStamp(this.getPrevTS().get(0));
+        grpc_operation.addPrevTimeStamp(this.getPrevTS().get(1));
+
+     
+        return grpc_operation.build(); 
     }
 }

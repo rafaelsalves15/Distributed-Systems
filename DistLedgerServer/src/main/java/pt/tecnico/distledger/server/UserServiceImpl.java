@@ -144,6 +144,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     public synchronized void balance(UserDistLedger.BalanceRequest request,
                                      StreamObserver<UserDistLedger.SignedBalanceResponse> responseObserver)  {
         try {
+
             // Unpack request
             String userId = request.getUserId();
             List<Integer> prev = request.getPrevTimestampList();
@@ -166,7 +167,6 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
             UserDistLedger.BalanceResponse response  = responseBuilder.build(); 
 
             UserDistLedger.SignedBalanceResponse signedResponse = createSignedBalanceResponse(response , secretKey);
-
 
             responseObserver.onNext(signedResponse);
             responseObserver.onCompleted();

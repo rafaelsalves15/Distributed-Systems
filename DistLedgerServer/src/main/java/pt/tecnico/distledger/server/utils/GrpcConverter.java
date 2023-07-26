@@ -43,6 +43,7 @@ public class GrpcConverter {
 
     public static List<Operation> listGrpcStateToDomain(List<DistLedgerCommonDefinitions.Operation> operations) {
         ArrayList<Operation> list = new ArrayList<>();
+
         for (DistLedgerCommonDefinitions.Operation op : operations) {
             list.add(grpcStateToDomain(op));
         }

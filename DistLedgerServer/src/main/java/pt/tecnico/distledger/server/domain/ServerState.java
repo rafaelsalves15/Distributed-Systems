@@ -110,9 +110,7 @@ public class ServerState {
             return repTS; 
         }
         else {
-            // W A I T 
-            System.out.println("FE AHEAD OF REPLIACA");
-            return repTS;
+            throw new IllegalStateException("Front-End ahead of Replica");   
         }
     }
 
@@ -147,7 +145,7 @@ public class ServerState {
         printTS(prev);
         isServerActive();
 
-        if(checkIfAhead( prev) == 1 ){
+        if(checkIfAhead(prev) == 1 ){
             
             if (!accountExists(userId)) {
                 throw new AccountDoesNotExistException();
@@ -162,7 +160,7 @@ public class ServerState {
 
             if (value <= 0 || userId.equals(destUserId)) {
                 // just ignore
-                return repTS; // FIXME
+                throw new IllegalArgumentException();
             }
 
             // Check if account has enough funds
@@ -183,8 +181,7 @@ public class ServerState {
             return repTS;
         }
         else {
-            // MISS
-            return repTS;
+            throw new IllegalStateException("Front-End ahead of Replica");   
         }
     }
 
@@ -226,13 +223,13 @@ public class ServerState {
 
             // Adicionar valor equitativo as contas dos outros users 
             int numAccounts = this.accounts.size();
-            double valueToAdd = finalValue / ( numAccounts - 2 )  ; // broker e conta a que subtraimos o valor nao contam pois nao vao receber o dinheiro
+            double valueToAdd = finalValue / ( numAccounts - 1 )  ; // conta a que subtraimos o valor nao contam pois nao vao receber o dinheiro
             int valueToAddI = (int) valueToAdd ;
             
             // Percorrer o hashMap accounts -- vamos buscar o saldo de cada usuario e adicionar-lhe o valor devido
             for (String nameAccount : this.accounts.keySet()) {
-                if (nameAccount.equals(name) || nameAccount.equals("broker")){
-                    continue;                // Broker e Conta que partilha o dinheiro nao vao ter dinheiro adicionado na sua conta
+                if (nameAccount.equals(name) ){
+                    continue;                //Conta que partilha o dinheiro nao vao ter dinheiro adicionado na sua conta
                 }
                 int accountBalance = this.accounts.get(nameAccount);
                 this.accounts.put(nameAccount, accountBalance + valueToAddI);
@@ -242,8 +239,7 @@ public class ServerState {
         
         }
         else{
-            //MISS
-            return repTS;
+            throw new IllegalStateException("Front-End ahead of Replica");    
         }
     }
     
@@ -262,18 +258,16 @@ public class ServerState {
             return result;
         }
         else{
-            // MISS 
-            List<Object> result = new ArrayList<>(); return result;
+            throw new IllegalStateException("Front-End ahead of Replica");
         }
     }
 
 
 
 
-    public synchronized void gossip(LedgerState state) throws InactiveServerException, AccountAlreadyExistsException, AccountDoesNotExistException, InsufficientBalanceException, DestAccountDoesNotExistException{
+    public synchronized void gossip(LedgerState state) throws InactiveServerException, AccountAlreadyExistsException, AccountDoesNotExistException, InsufficientBalanceException, DestAccountDoesNotExistException, ValueNotValidException{
         //Servidor contrario 
         int otherServer = server ^ 1 ;// XOR: 0 passa a 1 ; 1 passa a 0 
-        
         int operationUpdate = repTS.get(otherServer); // Updates da outra replica/servidor 
         int numOperations = state.getLedgerCount(); // Num de operacoes no ledger
 
@@ -281,6 +275,7 @@ public class ServerState {
         while(  operationUpdate < numOperations ){
             //Obter operacao
             DistLedgerCommonDefinitions.Operation operation = state.getLedger(operationUpdate);
+
 
             //Se Operacao for "createAccount" (operacao de escrita)
             if(operation.getType().equals(DistLedgerCommonDefinitions.OperationType.OP_CREATE_ACCOUNT)){
@@ -291,13 +286,17 @@ public class ServerState {
             else if(operation.getType().equals(DistLedgerCommonDefinitions.OperationType.OP_TRANSFER_TO)){
                 handleTransferToOperation(operation, otherServer);
             }
+            
+            //Se Operacao for "shareWithOthers" (operacao de escrita)
+            else if(operation.getType().equals(DistLedgerCommonDefinitions.OperationType.OP_SHARE_WITH_OTHERS)){
+                handleShareWithOthersOperation(operation, otherServer);
+            }
 
             operationUpdate++;
         }
     }
 
     public void handleCreateAccontOperation(DistLedgerCommonDefinitions.Operation operation , int otherServer) throws InactiveServerException, AccountAlreadyExistsException{
-       
         String name = operation.getUserId();
         createAccount(name, operation.getPrevTimeStampList()); 
         
@@ -305,7 +304,6 @@ public class ServerState {
         
         repTS.set(server, repTS.get(server) - 1); // Decrementar valor da repTS de Server
         repTS.set(otherServer, repTS.get(otherServer) + 1); // Incrementar valor de repTS do outro Server
-        
         valueTS.set(server, valueTS.get(server) - 1);       // Decrementar valor de valueTS de Server
         valueTS.set(otherServer, valueTS.get(otherServer) + 1); //Incrementar valor de valueTS de outro Server
         
@@ -328,6 +326,21 @@ public class ServerState {
         valueTS.set(otherServer, valueTS.get(otherServer) + 1); //Incrementar valor de valueTS de outro Server
     }
 
+    public void handleShareWithOthersOperation(DistLedgerCommonDefinitions.Operation operation, int otherServer) throws AccountDoesNotExistException, ValueNotValidException{
+
+        String accFrom = operation.getUserId();
+        int value = operation.getValue();
+
+        shareWithOthersSvState(accFrom, value, operation.getPrevTimeStampList());
+
+        ledger.remove(ledger.size()-1); //TODO:CHECK THIS
+
+        repTS.set(server, repTS.get(server) - 1); // Decrementar valor da repTS de Server
+        repTS.set(otherServer, repTS.get(otherServer) + 1); // Incrementar valor de repTS do outro Server
+        
+        valueTS.set(server, valueTS.get(server) - 1);       // Decrementar valor de valueTS de Server
+        valueTS.set(otherServer, valueTS.get(otherServer) + 1); //Incrementar valor de valueTS de outro Server
+    }
 
     
     public void printTS(List<Integer> prev){

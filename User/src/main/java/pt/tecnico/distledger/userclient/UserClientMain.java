@@ -24,7 +24,7 @@ public class UserClientMain {
         final int port = Integer.parseInt(args[1]);
         final String serverAddress = host + ":" + port;
         
-        UserService userService = new UserService(serverAddress);
+        UserService userService = new UserService();
         CommandParser parser = new CommandParser(userService);
         parser.parseInput();
 
