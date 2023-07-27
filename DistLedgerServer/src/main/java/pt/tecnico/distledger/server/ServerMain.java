@@ -4,8 +4,13 @@ import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import pt.tecnico.distledger.server.domain.ServerState;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+
 import java.io.File;
 import java.io.IOException;
+import java.security.KeyPair;
 
 public class ServerMain {
 
@@ -33,6 +38,8 @@ public class ServerMain {
                 .addService(crossServerService)
                 .build();
 
+
+       
         // Start the server
         try {
             server.start();

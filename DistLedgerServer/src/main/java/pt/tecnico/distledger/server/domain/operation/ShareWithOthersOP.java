@@ -8,6 +8,7 @@ import pt.tecnico.distledger.contract.DistLedgerCommonDefinitions;
 public class ShareWithOthersOP extends Operation {
     private int value;
     private List<Integer> prev;
+
         public ShareWithOthersOP(String name, int value , List<Integer> prev) {
             super(name);
             this.value = value;
@@ -35,12 +36,10 @@ public class ShareWithOthersOP extends Operation {
         }
     @Override
     public DistLedgerCommonDefinitions.Operation toGrpc() { 
-        // Builder
         DistLedgerCommonDefinitions.Operation.Builder grpcOperation = DistLedgerCommonDefinitions.Operation.newBuilder();
-        // Atribuir valores corretos 
         grpcOperation.setType(DistLedgerCommonDefinitions.OperationType.OP_SHARE_WITH_OTHERS);
         grpcOperation.setUserId(getAccount());
-        grpcOperation.setTypeValue(this.value);
+        grpcOperation.setValue(this.value);
         grpcOperation.addPrevTimeStamp(this.getPrevTS().get(0));
         grpcOperation.addPrevTimeStamp(this.getPrevTS().get(1));
         return grpcOperation.build();

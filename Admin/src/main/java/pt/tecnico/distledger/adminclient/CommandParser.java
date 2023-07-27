@@ -141,7 +141,7 @@ public class CommandParser {
         builder.setQualifier(server);
         AdminDistLedger.GossipRequest request = builder.build();
 
-        /*AdminDistLedger.GossipResponse response = */ this.adminService.gossip(request, server);
+        this.adminService.gossip(request, server);
     
 
     

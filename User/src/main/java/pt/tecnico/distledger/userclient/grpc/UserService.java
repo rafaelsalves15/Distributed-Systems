@@ -26,14 +26,13 @@ import pt.tecnico.distledger.contract.user.UserServiceGrpc;
 import javax.crypto.spec.SecretKeySpec;
 
 
-
 import java.io.InputStream;
 
 public class UserService {
     private  ManagedChannel channel;
     private  UserServiceGrpc.UserServiceBlockingStub stub;
     private final static String SECRETKEYPATH = "/home/rafael/SDEE23/distledger-private-solution-phase-1-reference/User/src/main/resources/secret.key";
-    
+
     public UserService() {
         
     }
@@ -101,7 +100,7 @@ public class UserService {
         UserDistLedger.SignedBalanceResponse signedResponse = this.stub.balance(request);
         
         if (signedResponse == null) {
-            System.out.println("Error . null ");
+            System.err.println("Error: Response is null ");
             return null;
         }
         // Verificar a assinatura usando a chave secreta
@@ -111,8 +110,8 @@ public class UserService {
             // Assinatura e valida -> return a resposta original 
             return signedResponse;
         } else {
-            // Assinatura e invalida 
-            return null;
+            System.err.println("Signature not valid");
+            return null; 
         }
     }
 
@@ -124,7 +123,7 @@ public class UserService {
         UserDistLedger.SignedTransferToResponse signedResponse = this.stub.transferTo(request);
         
         if (signedResponse == null) {
-            System.err.println("Error - response is null ");
+            System.err.println("Error: Response is null  ");
             return null;
         }
 
@@ -208,10 +207,10 @@ public class UserService {
         boolean signatureIsValid = Arrays.equals(calculatedDigest, decryptedSignature);
 
             if (signatureIsValid) {
-                System.out.println("Signature is valid! Message accepted! :)");
+               // System.out.println("Signature is valid! Message accepted! :)");
         } 
         else {
-                System.out.println("Signature is invalid! Message rejected! :(");
+             // System.out.println("Signature is invalid! Message rejected! :(");
         }
 
         return signatureIsValid;
@@ -231,10 +230,10 @@ public class UserService {
         boolean signatureIsValid = Arrays.equals(calculatedDigest, decryptedSignature);
 
             if (signatureIsValid) {
-                System.out.println("Signature is valid! Message accepted! :)");
+                //System.out.println("Signature is valid! Message accepted! :)");
         } 
         else {
-                System.out.println("Signature is invalid! Message rejected! :(");
+                // System.out.println("Signature is invalid! Message rejected! :(");
         }
 
         return signatureIsValid;
@@ -253,14 +252,16 @@ public class UserService {
         // Compare the decrypted signature with the calculated digest
         boolean signatureIsValid = Arrays.equals(calculatedDigest, decryptedSignature);
 
-            if (signatureIsValid) {
-                System.out.println("Signature is valid! Message accepted! :)");
+        if (signatureIsValid) {
+            // System.out.println("Signature is valid! Message accepted! :)");
         } 
         else {
-                System.out.println("Signature is invalid! Message rejected! :(");
-        }
-
+            // System.out.println("Signature is invalid! Message rejected! :(");
+               
+        } 
         return signatureIsValid;
+         
+        
     }
 
     public boolean verifyShareWithOthersSignature(SignedShareWithOthersResponse signedResponse, SecretKey secretKey) throws Exception {
@@ -276,16 +277,15 @@ public class UserService {
         // Compare the decrypted signature with the calculated digest
         boolean signatureIsValid = Arrays.equals(calculatedDigest, decryptedSignature);
 
-            if (signatureIsValid) {
-                System.out.println("Signature is valid! Message accepted! :)");
+        if (signatureIsValid) {
+            // System.out.println("Signature is valid! Message accepted! :)");
         } 
         else {
-                System.out.println("Signature is invalid! Message rejected! :(");
+            //System.out.println("Signature is invalid! Message rejected! :(");
         }
 
         return signatureIsValid;
     }
-
 
 
 

@@ -6,6 +6,11 @@ import pt.tecnico.distledger.contract.user.UserDistLedger.CreateAccountResponse;
 import pt.tecnico.distledger.contract.user.UserDistLedger.SignedCreateAccountResponse;
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -20,6 +25,7 @@ public class CommandParser {
     private static final String HELP = "help";
     private static final String EXIT = "exit";
     private static final String SHAREWITHOTHERS = "shareWithOthers";
+
 
     private final UserService userService;
     private List<Integer> prevTimeStamp = new ArrayList<>(2);
@@ -195,7 +201,7 @@ public class CommandParser {
             //SignedBalanceResponse formada porBalancetResponse (response) e signat ure
             // getResponse() pois newTimestamp e guardado em BalanceResponse 
             prevTimeStamp.set(0, response.getResponse().getNewTimestamp(0));
-            prevTimeStamp.set(1, response.getResponse().getNewTimestamp(1)); //TODO: Check this --- leitura 
+            prevTimeStamp.set(1, response.getResponse().getNewTimestamp(1));  
 
             System.out.println("OK\n" + response.getResponse().getValue());
         } catch (StatusRuntimeException e) {
@@ -230,12 +236,14 @@ public class CommandParser {
             
             System.out.println("OK");
         } catch (StatusRuntimeException e) {
-            System.out.println("CP catch");
             System.out.println(e.getStatus().getDescription());
         }
 
-
     }
+
+
+        
+
 
     private void printUsage() {
         System.out.println("Usage:\n" +

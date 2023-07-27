@@ -7,10 +7,12 @@ import pt.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.exceptions.AccountAlreadyExistsException;
 import pt.tecnico.distledger.server.domain.exceptions.AccountDoesNotExistException;
+import pt.tecnico.distledger.server.domain.exceptions.AccountHasNoMoneyToShareException;
 import pt.tecnico.distledger.server.domain.exceptions.DestAccountDoesNotExistException;
 import pt.tecnico.distledger.server.domain.exceptions.InactiveServerException;
 import pt.tecnico.distledger.server.domain.exceptions.InsufficientBalanceException;
 import pt.tecnico.distledger.server.domain.exceptions.ValueNotValidException;
+import pt.tecnico.distledger.server.domain.exceptions.ViolationOfCausalityException;
 import pt.tecnico.distledger.server.grpc.*;
 import io.grpc.stub.StreamObserver;
 
@@ -43,6 +45,10 @@ public class CrossServerServiceImpl extends  DistLedgerCrossServerServiceGrpc.Di
         } catch (DestAccountDoesNotExistException e) {
             System.out.println(e.getStatus().getDescription());
         } catch (ValueNotValidException e) {
+            System.out.println(e.getStatus().getDescription());
+        } catch (ViolationOfCausalityException e) {
+            System.out.println(e.getStatus().getDescription());
+        } catch (AccountHasNoMoneyToShareException e) {
             System.out.println(e.getStatus().getDescription());
         }
         

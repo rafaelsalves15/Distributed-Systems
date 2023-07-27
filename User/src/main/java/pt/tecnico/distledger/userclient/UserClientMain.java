@@ -1,5 +1,10 @@
 package pt.tecnico.distledger.userclient;
 
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
 public class UserClientMain {
